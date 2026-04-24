@@ -36,7 +36,7 @@ import {
 
 const schema = yup.object({
   name: yup.string().required('Informe o nome da conta'),
-  type: yup.string().required('Informe o tipo da conta'),
+  type: yup.mixed<AccountType>().required('Informe o tipo da conta'),
   initialBalance: yup.number().min(0, 'O saldo não pode ser negativo')
 });
 
@@ -59,7 +59,11 @@ export function AccountsPage() {
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [error, setError] = useState('');
 
-  const { data = [], isLoading } = useQuery({
+  const {
+    data = [],
+    isLoading,
+    isError
+  } = useQuery({
     queryKey: ['accounts'],
     queryFn: accountService.findAll
   });
@@ -115,6 +119,24 @@ export function AccountsPage() {
     setEditingAccount(null);
     setError('');
   };
+
+  const handleDelete = (id: string) => {
+    const confirmed = window.confirm('Deseja realmente remover esta conta?');
+
+    if (confirmed) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  if (isError) {
+    return (
+      <Alert severity="error">
+        Erro ao carregar contas. Verifique a conexão com o servidor.
+      </Alert>
+    );
+  }
+
+  const isSaving = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -282,7 +304,8 @@ export function AccountsPage() {
                       <IconButton
                         size="small"
                         color="error"
-                        onClick={() => deleteMutation.mutate(account._id)}
+                        disabled={deleteMutation.isPending}
+                        onClick={() => handleDelete(account._id)}
                       >
                         <DeleteRoundedIcon fontSize="small" />
                       </IconButton>
@@ -350,7 +373,7 @@ export function AccountsPage() {
             }
           }}
         >
-          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
             <Box component="form" onSubmit={handleSubmit}>
               <DialogContent>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 1 }}>
@@ -411,10 +434,14 @@ export function AccountsPage() {
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}
+                  disabled={isSaving}
                   sx={{ textTransform: 'none', fontWeight: 800 }}
                 >
-                  {editingAccount ? 'Salvar alterações' : 'Criar conta'}
+                  {isSaving
+                    ? 'Salvando...'
+                    : editingAccount
+                      ? 'Salvar alterações'
+                      : 'Criar conta'}
                 </Button>
               </DialogActions>
             </Box>

@@ -15,15 +15,16 @@ import {
   ListItemText,
   Toolbar,
   Typography,
-  useTheme,
-  alpha
+  alpha,
+  useTheme
 } from '@mui/material';
 
 import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
+import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded';
 import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
-
+import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import { useAuth } from '../auth/AuthContext';
 
 const drawerWidth = 280;
@@ -33,6 +34,16 @@ const menuItems = [
     label: 'Dashboard',
     path: '/dashboard',
     icon: <DashboardRoundedIcon />
+  },
+  {
+    label: 'Contas',
+    path: '/accounts',
+    icon: <AccountBalanceRoundedIcon />
+  },
+  {
+    label: 'Transações',
+    path: '/transactions',
+    icon: <ReceiptLongRoundedIcon />
   }
 ];
 
@@ -48,6 +59,9 @@ export function MainLayout() {
     logout();
     navigate('/login', { replace: true });
   };
+
+  const currentTitle =
+    menuItems.find((item) => location.pathname === item.path)?.label || 'Dashboard';
 
   const drawerContent = (
     <Box
@@ -217,10 +231,10 @@ export function MainLayout() {
 
           <Box>
             <Typography sx={{ fontWeight: 900, fontSize: 20 }}>
-              Dashboard
+              {currentTitle}
             </Typography>
             <Typography sx={{ color: 'text.secondary', fontSize: 14 }}>
-              Visão geral do seu controle financeiro
+              Gerencie seu controle financeiro
             </Typography>
           </Box>
         </Toolbar>
