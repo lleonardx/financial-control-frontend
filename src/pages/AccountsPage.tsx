@@ -8,11 +8,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
-  Grid,
   IconButton,
   MenuItem,
   Paper,
-  Stack,
   TextField,
   Tooltip,
   Typography
@@ -119,7 +117,7 @@ export function AccountsPage() {
   };
 
   return (
-    <Stack spacing={3}>
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Paper
         elevation={0}
         sx={{
@@ -130,17 +128,20 @@ export function AccountsPage() {
           background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)'
         }}
       >
-        <Stack
-          direction={{ xs: 'column', sm: 'row' }}
-          justifyContent="space-between"
-          spacing={2}
-          alignItems={{ xs: 'flex-start', sm: 'center' }}
+        <Box
+          sx={{
+            display: 'flex',
+            gap: 2,
+            justifyContent: 'space-between',
+            alignItems: { xs: 'flex-start', sm: 'center' },
+            flexDirection: { xs: 'column', sm: 'row' }
+          }}
         >
           <Box>
-            <Typography variant="h4" fontWeight={900}>
+            <Typography variant="h4" sx={{ fontWeight: 900 }}>
               Contas
             </Typography>
-            <Typography color="text.secondary">
+            <Typography sx={{ color: 'text.secondary' }}>
               Gerencie suas contas, carteiras, cartões e investimentos.
             </Typography>
           </Box>
@@ -157,51 +158,53 @@ export function AccountsPage() {
           >
             Nova conta
           </Button>
-        </Stack>
+        </Box>
       </Paper>
 
-      <Grid container spacing={2.5}>
-        <Grid item xs={12} md={4}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: 4,
-              border: '1px solid',
-              borderColor: 'divider'
-            }}
-          >
-            <Typography color="text.secondary" fontWeight={700}>
-              Saldo total
-            </Typography>
-            <Typography variant="h4" fontWeight={900} mt={1}>
-              {money.format(totalBalance)}
-            </Typography>
-          </Paper>
-        </Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' },
+          gap: 2.5
+        }}
+      >
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            borderRadius: 4,
+            border: '1px solid',
+            borderColor: 'divider'
+          }}
+        >
+          <Typography sx={{ color: 'text.secondary', fontWeight: 700 }}>
+            Saldo total
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 900, mt: 1 }}>
+            {money.format(totalBalance)}
+          </Typography>
+        </Paper>
 
-        <Grid item xs={12} md={4}>
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              borderRadius: 4,
-              border: '1px solid',
-              borderColor: 'divider'
-            }}
-          >
-            <Typography color="text.secondary" fontWeight={700}>
-              Contas ativas
-            </Typography>
-            <Typography variant="h4" fontWeight={900} mt={1}>
-              {data.length}
-            </Typography>
-          </Paper>
-        </Grid>
-      </Grid>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 3,
+            borderRadius: 4,
+            border: '1px solid',
+            borderColor: 'divider'
+          }}
+        >
+          <Typography sx={{ color: 'text.secondary', fontWeight: 700 }}>
+            Contas ativas
+          </Typography>
+          <Typography variant="h4" sx={{ fontWeight: 900, mt: 1 }}>
+            {data.length}
+          </Typography>
+        </Paper>
+      </Box>
 
       {isLoading ? (
-        <Typography color="text.secondary">Carregando contas...</Typography>
+        <Typography sx={{ color: 'text.secondary' }}>Carregando contas...</Typography>
       ) : data.length === 0 ? (
         <Paper
           elevation={0}
@@ -213,97 +216,112 @@ export function AccountsPage() {
             borderColor: 'divider'
           }}
         >
-          <Typography fontWeight={800}>Nenhuma conta cadastrada</Typography>
-          <Typography color="text.secondary" mt={1}>
+          <Typography sx={{ fontWeight: 800 }}>Nenhuma conta cadastrada</Typography>
+          <Typography sx={{ color: 'text.secondary', mt: 1 }}>
             Crie sua primeira conta para começar a registrar transações.
           </Typography>
         </Paper>
       ) : (
-        <Grid container spacing={2.5}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: 'repeat(2, 1fr)',
+              lg: 'repeat(3, 1fr)'
+            },
+            gap: 2.5
+          }}
+        >
           {data.map((account) => (
-            <Grid item xs={12} md={6} lg={4} key={account._id}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: 4,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  transition: '0.2s',
-                  '&:hover': {
-                    transform: 'translateY(-2px)',
-                    boxShadow: '0 16px 40px rgba(15,23,42,0.08)'
-                  }
-                }}
-              >
-                <Stack spacing={2}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                    <Box
-                      sx={{
-                        width: 46,
-                        height: 46,
-                        borderRadius: 3,
-                        display: 'grid',
-                        placeItems: 'center',
-                        bgcolor: 'primary.lighter',
-                        color: 'primary.main'
-                      }}
-                    >
-                      {getAccountIcon(account.type)}
-                    </Box>
-
-                    <Stack direction="row" spacing={0.5}>
-                      <Tooltip title="Editar">
-                        <IconButton size="small" onClick={() => handleOpenEdit(account)}>
-                          <EditRoundedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-
-                      <Tooltip title="Remover">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => deleteMutation.mutate(account._id)}
-                        >
-                          <DeleteRoundedIcon fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </Stack>
-                  </Stack>
-
-                  <Box>
-                    <Typography fontWeight={900} fontSize={18}>
-                      {account.name}
-                    </Typography>
-
-                    <Chip
-                      label={accountTypeLabels[account.type]}
-                      size="small"
-                      sx={{
-                        mt: 1,
-                        fontWeight: 700,
-                        borderRadius: 2
-                      }}
-                    />
+            <Paper
+              key={account._id}
+              elevation={0}
+              sx={{
+                p: 3,
+                borderRadius: 4,
+                border: '1px solid',
+                borderColor: 'divider',
+                transition: '0.2s',
+                '&:hover': {
+                  transform: 'translateY(-2px)',
+                  boxShadow: '0 16px 40px rgba(15,23,42,0.08)'
+                }
+              }}
+            >
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'flex-start'
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 46,
+                      height: 46,
+                      borderRadius: 3,
+                      display: 'grid',
+                      placeItems: 'center',
+                      bgcolor: 'rgba(37, 99, 235, 0.10)',
+                      color: 'primary.main'
+                    }}
+                  >
+                    {getAccountIcon(account.type)}
                   </Box>
 
-                  <Box>
-                    <Typography color="text.secondary" fontSize={13} fontWeight={700}>
-                      Saldo atual
-                    </Typography>
-                    <Typography variant="h5" fontWeight={900}>
-                      {money.format(account.currentBalance)}
-                    </Typography>
+                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    <Tooltip title="Editar">
+                      <IconButton size="small" onClick={() => handleOpenEdit(account)}>
+                        <EditRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
+
+                    <Tooltip title="Remover">
+                      <IconButton
+                        size="small"
+                        color="error"
+                        onClick={() => deleteMutation.mutate(account._id)}
+                      >
+                        <DeleteRoundedIcon fontSize="small" />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
-                </Stack>
-              </Paper>
-            </Grid>
+                </Box>
+
+                <Box>
+                  <Typography sx={{ fontWeight: 900, fontSize: 18 }}>
+                    {account.name}
+                  </Typography>
+
+                  <Chip
+                    label={accountTypeLabels[account.type]}
+                    size="small"
+                    sx={{
+                      mt: 1,
+                      fontWeight: 700,
+                      borderRadius: 2
+                    }}
+                  />
+                </Box>
+
+                <Box>
+                  <Typography sx={{ color: 'text.secondary', fontSize: 13, fontWeight: 700 }}>
+                    Saldo atual
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 900 }}>
+                    {money.format(account.currentBalance)}
+                  </Typography>
+                </Box>
+              </Box>
+            </Paper>
           ))}
-        </Grid>
+        </Box>
       )}
 
       <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
-        <DialogTitle fontWeight={900}>
+        <DialogTitle sx={{ fontWeight: 900 }}>
           {editingAccount ? 'Editar conta' : 'Nova conta'}
         </DialogTitle>
 
@@ -335,7 +353,7 @@ export function AccountsPage() {
           {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
             <Box component="form" onSubmit={handleSubmit}>
               <DialogContent>
-                <Stack spacing={2.5} mt={1}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 1 }}>
                   {error && <Alert severity="error">{error}</Alert>}
 
                   <TextField
@@ -382,7 +400,7 @@ export function AccountsPage() {
                         : ''
                     }
                   />
-                </Stack>
+                </Box>
               </DialogContent>
 
               <DialogActions sx={{ px: 3, pb: 3 }}>
@@ -403,6 +421,6 @@ export function AccountsPage() {
           )}
         </Formik>
       </Dialog>
-    </Stack>
+    </Box>
   );
 }
