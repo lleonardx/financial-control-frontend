@@ -25,7 +25,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Formik } from 'formik';
 import * as yup from 'yup';
 
+import { useSnackbar } from '../components/feedback/SnackbarProvider';
 import { accountService } from '../services/accountService';
+import { categoryService } from '../services/categoryService';
 import { transactionService } from '../services/transactionService';
 import type { Account } from '../types/account';
 import {
@@ -37,7 +39,6 @@ import {
   type Transaction,
   type TransactionCategory
 } from '../types/transaction';
-import { categoryService } from '../services/categoryService';
 
 const money = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -80,18 +81,15 @@ function getStatusColor(status: TransactionStatus) {
 
 export function TransactionsPage() {
   const queryClient = useQueryClient();
+  const { showSnackbar } = useSnackbar();
 
   const [open, setOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
-  const [error, setError] = useState('');
-
+  const [deleteId, setDeleteId] = useState<string | null>(null);
   const [filterType, setFilterType] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
 
-  const {
-    data: accounts = [],
-    isError: accountsError
-  } = useQuery({
+  const { data: accounts = [], isError: accountsError } = useQuery({
     queryKey: ['accounts'],
     queryFn: accountService.findAll
   });
@@ -109,10 +107,7 @@ export function TransactionsPage() {
       })
   });
 
-  const {
-    data: categories = [],
-    isError: categoriesError
-  } = useQuery({
+  const { data: categories = [], isError: categoriesError } = useQuery({
     queryKey: ['categories'],
     queryFn: () => categoryService.findAll()
   });
@@ -144,10 +139,11 @@ export function TransactionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      showSnackbar('Transação criada com sucesso!', 'success');
       handleClose();
     },
     onError: () => {
-      setError('Não foi possível salvar a transação.');
+      showSnackbar('Não foi possível salvar a transação.', 'error');
     }
   });
 
@@ -157,10 +153,11 @@ export function TransactionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      showSnackbar('Transação atualizada com sucesso!', 'success');
       handleClose();
     },
     onError: () => {
-      setError('Não foi possível atualizar a transação.');
+      showSnackbar('Não foi possível atualizar a transação.', 'error');
     }
   });
 
@@ -169,32 +166,41 @@ export function TransactionsPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      showSnackbar('Transação removida com sucesso!', 'success');
+      setDeleteId(null);
+    },
+    onError: () => {
+      showSnackbar('Não foi possível remover a transação.', 'error');
+      setDeleteId(null);
     }
   });
 
   const handleOpenCreate = () => {
     setEditingTransaction(null);
-    setError('');
     setOpen(true);
   };
 
   const handleOpenEdit = (transaction: Transaction) => {
     setEditingTransaction(transaction);
-    setError('');
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
     setEditingTransaction(null);
-    setError('');
   };
 
   const handleDelete = (id: string) => {
-    const confirmed = window.confirm('Deseja realmente remover esta transação?');
+    setDeleteId(id);
+  };
 
-    if (confirmed) {
-      deleteMutation.mutate(id);
+  const handleCancelDelete = () => {
+    setDeleteId(null);
+  };
+
+  const handleConfirmDelete = () => {
+    if (deleteId) {
+      deleteMutation.mutate(deleteId);
     }
   };
 
@@ -207,6 +213,7 @@ export function TransactionsPage() {
       </Alert>
     );
   }
+
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Paper
@@ -474,11 +481,7 @@ export function TransactionsPage() {
                   />
 
                   {transaction.paymentMethod && (
-                    <Chip
-                      size="small"
-                      label={transaction.paymentMethod}
-                      sx={{ fontWeight: 700 }}
-                    />
+                    <Chip size="small" label={transaction.paymentMethod} sx={{ fontWeight: 700 }} />
                   )}
                 </Box>
               </Paper>
@@ -541,8 +544,6 @@ export function TransactionsPage() {
             <Box component="form" onSubmit={handleSubmit}>
               <DialogContent>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 1 }}>
-                  {error && <Alert severity="error">{error}</Alert>}
-
                   <TextField
                     select
                     fullWidth
@@ -710,6 +711,32 @@ export function TransactionsPage() {
             </Box>
           )}
         </Formik>
+      </Dialog>
+
+      <Dialog open={!!deleteId} onClose={handleCancelDelete} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ fontWeight: 900 }}>Confirmar exclusão</DialogTitle>
+
+        <DialogContent>
+          <Typography sx={{ color: 'text.secondary' }}>
+            Deseja realmente remover esta transação?
+          </Typography>
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={handleCancelDelete} sx={{ textTransform: 'none' }}>
+            Cancelar
+          </Button>
+
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleConfirmDelete}
+            disabled={deleteMutation.isPending}
+            sx={{ textTransform: 'none', fontWeight: 800 }}
+          >
+            {deleteMutation.isPending ? 'Removendo...' : 'Remover'}
+          </Button>
+        </DialogActions>
       </Dialog>
     </Box>
   );
