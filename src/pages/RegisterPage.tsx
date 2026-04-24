@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
-  Alert,
   Box,
   Button,
   Divider,
@@ -18,6 +16,7 @@ import * as yup from 'yup';
 
 import { AuthLayout } from '../layouts/AuthLayout';
 import { useAuth } from '../auth/AuthContext';
+import { useSnackbar } from '../components/feedback/SnackbarProvider';
 
 const schema = yup.object({
   name: yup.string().min(3, 'Informe pelo menos 3 caracteres').required('Informe seu nome'),
@@ -32,7 +31,7 @@ const schema = yup.object({
 export function RegisterPage() {
   const navigate = useNavigate();
   const { register } = useAuth();
-  const [error, setError] = useState('');
+  const { showSnackbar } = useSnackbar();
 
   return (
     <AuthLayout
@@ -49,17 +48,19 @@ export function RegisterPage() {
         validationSchema={schema}
         onSubmit={async (values, helpers) => {
           try {
-            setError('');
-
             await register({
               name: values.name,
               email: values.email,
               password: values.password
             });
 
+            showSnackbar('Conta criada com sucesso!', 'success');
             navigate('/', { replace: true });
           } catch {
-            setError('Não foi possível criar sua conta. Verifique os dados informados.');
+            showSnackbar(
+              'Não foi possível criar sua conta. Verifique os dados informados.',
+              'error'
+            );
           } finally {
             helpers.setSubmitting(false);
           }
@@ -68,8 +69,6 @@ export function RegisterPage() {
         {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
           <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={2.5}>
-              {error && <Alert severity="error">{error}</Alert>}
-
               <TextField
                 fullWidth
                 label="Nome"
@@ -141,7 +140,9 @@ export function RegisterPage() {
                 onBlur={handleBlur}
                 error={Boolean(touched.confirmPassword && errors.confirmPassword)}
                 helperText={
-                  touched.confirmPassword && errors.confirmPassword ? errors.confirmPassword : ''
+                  touched.confirmPassword && errors.confirmPassword
+                    ? errors.confirmPassword
+                    : ''
                 }
                 slotProps={{
                   input: {
