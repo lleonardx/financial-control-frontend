@@ -27,6 +27,7 @@ import { Formik } from 'formik';
 import * as yup from 'yup';
 
 import { accountService } from '../services/accountService';
+import { useSnackbar } from '../components/feedback/SnackbarProvider';
 import {
   AccountType,
   accountTypeLabels,
@@ -36,7 +37,7 @@ import {
 
 const schema = yup.object({
   name: yup.string().required('Informe o nome da conta'),
-  type: yup.string().required('Informe o tipo da conta'),
+  type: yup.mixed<AccountType>().required('Informe o tipo da conta'),
   initialBalance: yup.number().min(0, 'O saldo não pode ser negativo')
 });
 
@@ -54,12 +55,16 @@ function getAccountIcon(type: AccountType) {
 
 export function AccountsPage() {
   const queryClient = useQueryClient();
+  const { showSnackbar } = useSnackbar();
 
   const [open, setOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
-  const [error, setError] = useState('');
 
-  const { data = [], isLoading } = useQuery({
+  const {
+    data = [],
+    isLoading,
+    isError
+  } = useQuery({
     queryKey: ['accounts'],
     queryFn: accountService.findAll
   });
@@ -72,10 +77,11 @@ export function AccountsPage() {
     mutationFn: accountService.create,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      showSnackbar('Conta criada com sucesso!', 'success');
       handleClose();
     },
     onError: () => {
-      setError('Não foi possível salvar a conta.');
+      showSnackbar('Não foi possível salvar a conta.', 'error');
     }
   });
 
@@ -84,10 +90,11 @@ export function AccountsPage() {
       accountService.update(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      showSnackbar('Conta atualizada com sucesso!', 'success');
       handleClose();
     },
     onError: () => {
-      setError('Não foi possível atualizar a conta.');
+      showSnackbar('Não foi possível atualizar a conta.', 'error');
     }
   });
 
@@ -95,26 +102,45 @@ export function AccountsPage() {
     mutationFn: accountService.remove,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts'] });
+      showSnackbar('Conta removida com sucesso!', 'success');
+    },
+    onError: () => {
+      showSnackbar('Não foi possível remover a conta.', 'error');
     }
   });
 
   const handleOpenCreate = () => {
     setEditingAccount(null);
-    setError('');
     setOpen(true);
   };
 
   const handleOpenEdit = (account: Account) => {
     setEditingAccount(account);
-    setError('');
     setOpen(true);
   };
 
   const handleClose = () => {
     setOpen(false);
     setEditingAccount(null);
-    setError('');
   };
+
+  const handleDelete = (id: string) => {
+    const confirmed = window.confirm('Deseja realmente remover esta conta?');
+
+    if (confirmed) {
+      deleteMutation.mutate(id);
+    }
+  };
+
+  if (isError) {
+    return (
+      <Alert severity="error">
+        Erro ao carregar contas. Verifique a conexão com o servidor.
+      </Alert>
+    );
+  }
+
+  const isSaving = createMutation.isPending || updateMutation.isPending;
 
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
@@ -168,15 +194,7 @@ export function AccountsPage() {
           gap: 2.5
         }}
       >
-        <Paper
-          elevation={0}
-          sx={{
-            p: 3,
-            borderRadius: 4,
-            border: '1px solid',
-            borderColor: 'divider'
-          }}
-        >
+        <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
           <Typography sx={{ color: 'text.secondary', fontWeight: 700 }}>
             Saldo total
           </Typography>
@@ -185,15 +203,7 @@ export function AccountsPage() {
           </Typography>
         </Paper>
 
-        <Paper
-          elevation={0}
-          sx={{
-            p: 3,
-            borderRadius: 4,
-            border: '1px solid',
-            borderColor: 'divider'
-          }}
-        >
+        <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
           <Typography sx={{ color: 'text.secondary', fontWeight: 700 }}>
             Contas ativas
           </Typography>
@@ -250,13 +260,7 @@ export function AccountsPage() {
               }}
             >
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Box
-                  sx={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'flex-start'
-                  }}
-                >
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <Box
                     sx={{
                       width: 46,
@@ -282,7 +286,8 @@ export function AccountsPage() {
                       <IconButton
                         size="small"
                         color="error"
-                        onClick={() => deleteMutation.mutate(account._id)}
+                        disabled={deleteMutation.isPending}
+                        onClick={() => handleDelete(account._id)}
                       >
                         <DeleteRoundedIcon fontSize="small" />
                       </IconButton>
@@ -341,21 +346,16 @@ export function AccountsPage() {
             };
 
             if (editingAccount) {
-              updateMutation.mutate({
-                id: editingAccount._id,
-                payload
-              });
+              updateMutation.mutate({ id: editingAccount._id, payload });
             } else {
               createMutation.mutate(payload);
             }
           }}
         >
-          {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
+          {({ values, errors, touched, handleChange, handleBlur, handleSubmit }) => (
             <Box component="form" onSubmit={handleSubmit}>
               <DialogContent>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, mt: 1 }}>
-                  {error && <Alert severity="error">{error}</Alert>}
-
                   <TextField
                     fullWidth
                     label="Nome da conta"
@@ -411,10 +411,14 @@ export function AccountsPage() {
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={isSubmitting || createMutation.isPending || updateMutation.isPending}
+                  disabled={isSaving}
                   sx={{ textTransform: 'none', fontWeight: 800 }}
                 >
-                  {editingAccount ? 'Salvar alterações' : 'Criar conta'}
+                  {isSaving
+                    ? 'Salvando...'
+                    : editingAccount
+                      ? 'Salvar alterações'
+                      : 'Criar conta'}
                 </Button>
               </DialogActions>
             </Box>
