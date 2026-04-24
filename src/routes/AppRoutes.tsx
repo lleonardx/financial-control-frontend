@@ -3,7 +3,7 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import { LoginPage } from '../pages/LoginPage';
 import { ProtectedRoute } from '../auth/ProtectedRoute';
 import { MainRoutes } from './MainRoutes';
-import { RegisterPage } from '../pages/REgisterPage';
+import { RegisterPage } from '../pages/RegisterPage';
 
 export function AppRoutes() {
   return (

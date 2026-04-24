@@ -1,7 +1,5 @@
-import { useState } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import {
-  Alert,
   Box,
   Button,
   Divider,
@@ -17,6 +15,7 @@ import * as yup from 'yup';
 
 import { AuthLayout } from '../layouts/AuthLayout';
 import { useAuth } from '../auth/AuthContext';
+import { useSnackbar } from '../components/feedback/SnackbarProvider';
 
 const schema = yup.object({
   email: yup.string().email('E-mail inválido').required('Informe o e-mail'),
@@ -26,7 +25,7 @@ const schema = yup.object({
 export function LoginPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [error, setError] = useState('');
+  const { showSnackbar } = useSnackbar();
 
   return (
     <AuthLayout
@@ -38,11 +37,11 @@ export function LoginPage() {
         validationSchema={schema}
         onSubmit={async (values, helpers) => {
           try {
-            setError('');
             await login(values);
+            showSnackbar('Login realizado com sucesso!', 'success');
             navigate('/', { replace: true });
           } catch {
-            setError('E-mail ou senha inválidos');
+            showSnackbar('E-mail ou senha inválidos.', 'error');
           } finally {
             helpers.setSubmitting(false);
           }
@@ -51,8 +50,6 @@ export function LoginPage() {
         {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
           <Box component="form" onSubmit={handleSubmit}>
             <Stack spacing={2.5}>
-              {error && <Alert severity="error">{error}</Alert>}
-
               <TextField
                 fullWidth
                 label="E-mail"

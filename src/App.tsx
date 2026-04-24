@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
 import { AuthProvider } from './auth/AuthContext';
 import { AppRoutes } from './routes/AppRoutes';
+import { SnackbarProvider } from './components/feedback/SnackbarProvider';
 
 const queryClient = new QueryClient();
 
@@ -22,9 +23,6 @@ const theme = createTheme({
   },
   shape: {
     borderRadius: 12
-  },
-  typography: {
-    fontFamily: ['Inter', 'Roboto', 'Arial', 'sans-serif'].join(',')
   }
 });
 
@@ -34,9 +32,11 @@ export default function App() {
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
-          <AuthProvider>
-            <AppRoutes />
-          </AuthProvider>
+          <SnackbarProvider>
+            <AuthProvider>
+              <AppRoutes />
+            </AuthProvider>
+          </SnackbarProvider>
         </BrowserRouter>
       </ThemeProvider>
     </QueryClientProvider>

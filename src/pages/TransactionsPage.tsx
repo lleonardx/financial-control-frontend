@@ -37,6 +37,7 @@ import {
   type Transaction,
   type TransactionCategory
 } from '../types/transaction';
+import { categoryService } from '../services/categoryService';
 
 const money = new Intl.NumberFormat('pt-BR', {
   style: 'currency',
@@ -108,13 +109,13 @@ export function TransactionsPage() {
       })
   });
 
-  /**
-   * Temporário:
-   * Como ainda não montamos a tela/service de categorias,
-   * vamos deixar vazio por enquanto.
-   * No próximo passo vamos criar categoryService e trocar esse array por API.
-   */
-  const categories: TransactionCategory[] = [];
+  const {
+    data: categories = [],
+    isError: categoriesError
+  } = useQuery({
+    queryKey: ['categories'],
+    queryFn: () => categoryService.findAll()
+  });
 
   const totals = useMemo(() => {
     return transactions.reduce(
@@ -199,14 +200,13 @@ export function TransactionsPage() {
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
 
-  if (isError || accountsError) {
+  if (isError || accountsError || categoriesError) {
     return (
       <Alert severity="error">
         Erro ao carregar transações. Verifique a conexão com o servidor.
       </Alert>
     );
   }
-
   return (
     <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
       <Paper

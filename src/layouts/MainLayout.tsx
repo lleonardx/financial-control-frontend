@@ -25,6 +25,8 @@ import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceW
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
+import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
+
 import { useAuth } from '../auth/AuthContext';
 
 const drawerWidth = 280;
@@ -44,6 +46,11 @@ const menuItems = [
     label: 'Transações',
     path: '/transactions',
     icon: <ReceiptLongRoundedIcon />
+  },
+  {
+    label: 'Categorias',
+    path: '/categories',
+    icon: <CategoryRoundedIcon />
   }
 ];
 
