@@ -21,6 +21,8 @@ import DeleteRoundedIcon from '@mui/icons-material/DeleteRounded';
 import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import TrendingDownRoundedIcon from '@mui/icons-material/TrendingDownRounded';
 import PaidRoundedIcon from '@mui/icons-material/PaidRounded';
+import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
+import FilterAltRoundedIcon from '@mui/icons-material/FilterAltRounded';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Formik } from 'formik';
 import * as yup from 'yup';
@@ -117,20 +119,12 @@ export function TransactionsPage() {
       (acc, item) => {
         if (item.status !== TransactionStatus.PAID) return acc;
 
-        if (item.type === TransactionType.INCOME) {
-          acc.income += Number(item.amount || 0);
-        }
-
-        if (item.type === TransactionType.EXPENSE) {
-          acc.expense += Number(item.amount || 0);
-        }
+        if (item.type === TransactionType.INCOME) acc.income += Number(item.amount || 0);
+        if (item.type === TransactionType.EXPENSE) acc.expense += Number(item.amount || 0);
 
         return acc;
       },
-      {
-        income: 0,
-        expense: 0
-      }
+      { income: 0, expense: 0 }
     );
   }, [transactions]);
 
@@ -142,9 +136,7 @@ export function TransactionsPage() {
       showSnackbar('Transação criada com sucesso!', 'success');
       handleClose();
     },
-    onError: () => {
-      showSnackbar('Não foi possível salvar a transação.', 'error');
-    }
+    onError: () => showSnackbar('Não foi possível salvar a transação.', 'error')
   });
 
   const updateMutation = useMutation({
@@ -156,9 +148,7 @@ export function TransactionsPage() {
       showSnackbar('Transação atualizada com sucesso!', 'success');
       handleClose();
     },
-    onError: () => {
-      showSnackbar('Não foi possível atualizar a transação.', 'error');
-    }
+    onError: () => showSnackbar('Não foi possível atualizar a transação.', 'error')
   });
 
   const deleteMutation = useMutation({
@@ -199,12 +189,11 @@ export function TransactionsPage() {
   };
 
   const handleConfirmDelete = () => {
-    if (deleteId) {
-      deleteMutation.mutate(deleteId);
-    }
+    if (deleteId) deleteMutation.mutate(deleteId);
   };
 
   const isSaving = createMutation.isPending || updateMutation.isPending;
+  const result = totals.income - totals.expense;
 
   if (isError || accountsError || categoriesError) {
     return (
@@ -219,29 +208,49 @@ export function TransactionsPage() {
       <Paper
         elevation={0}
         sx={{
-          p: 3,
-          borderRadius: 4,
+          p: { xs: 3, md: 4 },
+          borderRadius: 5,
           border: '1px solid',
           borderColor: 'divider',
-          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)'
+          background: 'linear-gradient(135deg, #0f172a 0%, #1e3a8a 55%, #2563eb 100%)',
+          color: '#fff',
+          position: 'relative',
+          overflow: 'hidden'
         }}
       >
         <Box
           sx={{
+            position: 'absolute',
+            width: 220,
+            height: 220,
+            borderRadius: '50%',
+            bgcolor: 'rgba(255,255,255,0.08)',
+            right: -70,
+            top: -80
+          }}
+        />
+
+        <Box
+          sx={{
+            position: 'relative',
             display: 'flex',
-            gap: 2,
             justifyContent: 'space-between',
-            alignItems: { xs: 'flex-start', sm: 'center' },
-            flexDirection: { xs: 'column', sm: 'row' }
+            gap: 2,
+            flexDirection: { xs: 'column', sm: 'row' },
+            alignItems: { xs: 'flex-start', sm: 'center' }
           }}
         >
           <Box>
-            <Typography variant="h4" sx={{ fontWeight: 900 }}>
+            <Typography sx={{ opacity: 0.78, fontWeight: 800 }}>
+              FinancialControl
+            </Typography>
+
+            <Typography variant="h4" sx={{ fontWeight: 950, mt: 1 }}>
               Transações
             </Typography>
 
-            <Typography sx={{ color: 'text.secondary' }}>
-              Cadastre receitas, despesas e acompanhe os lançamentos financeiros.
+            <Typography sx={{ opacity: 0.78, mt: 1, maxWidth: 650 }}>
+              Cadastre receitas, despesas e acompanhe os lançamentos financeiros em tempo real.
             </Typography>
           </Box>
 
@@ -252,7 +261,12 @@ export function TransactionsPage() {
             sx={{
               borderRadius: 2.5,
               textTransform: 'none',
-              fontWeight: 800
+              fontWeight: 900,
+              bgcolor: '#fff',
+              color: '#1e3a8a',
+              '&:hover': {
+                bgcolor: 'rgba(255,255,255,0.9)'
+              }
             }}
           >
             Nova transação
@@ -267,42 +281,104 @@ export function TransactionsPage() {
           gap: 2.5
         }}
       >
-        <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
-          <Typography sx={{ color: 'text.secondary', fontWeight: 700 }}>
-            Receitas pagas
-          </Typography>
-          <Typography variant="h4" sx={{ fontWeight: 900, mt: 1, color: 'success.main' }}>
-            {money.format(totals.income)}
-          </Typography>
-        </Paper>
+        {[
+          {
+            label: 'Receitas pagas',
+            value: money.format(totals.income),
+            icon: <TrendingUpRoundedIcon />,
+            color: '#16a34a',
+            bg: 'rgba(22,163,74,0.10)'
+          },
+          {
+            label: 'Despesas pagas',
+            value: money.format(totals.expense),
+            icon: <TrendingDownRoundedIcon />,
+            color: '#dc2626',
+            bg: 'rgba(220,38,38,0.10)'
+          },
+          {
+            label: 'Resultado',
+            value: money.format(result),
+            icon: <PaidRoundedIcon />,
+            color: result >= 0 ? '#16a34a' : '#dc2626',
+            bg: result >= 0 ? 'rgba(22,163,74,0.10)' : 'rgba(220,38,38,0.10)'
+          }
+        ].map((card) => (
+          <Paper
+            key={card.label}
+            elevation={0}
+            sx={{
+              p: 3,
+              borderRadius: 5,
+              border: '1px solid',
+              borderColor: 'divider',
+              transition: '0.2s',
+              '&:hover': {
+                transform: 'translateY(-3px)',
+                boxShadow: '0 18px 42px rgba(15,23,42,0.10)'
+              }
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', gap: 2 }}>
+              <Box>
+                <Typography sx={{ color: 'text.secondary', fontWeight: 800, fontSize: 13 }}>
+                  {card.label}
+                </Typography>
 
-        <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
-          <Typography sx={{ color: 'text.secondary', fontWeight: 700 }}>
-            Despesas pagas
-          </Typography>
-          <Typography variant="h4" sx={{ fontWeight: 900, mt: 1, color: 'error.main' }}>
-            {money.format(totals.expense)}
-          </Typography>
-        </Paper>
+                <Typography variant="h4" sx={{ fontWeight: 950, mt: 1 }}>
+                  {card.value}
+                </Typography>
+              </Box>
 
-        <Paper elevation={0} sx={{ p: 3, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
-          <Typography sx={{ color: 'text.secondary', fontWeight: 700 }}>
-            Resultado
-          </Typography>
-          <Typography variant="h4" sx={{ fontWeight: 900, mt: 1 }}>
-            {money.format(totals.income - totals.expense)}
-          </Typography>
-        </Paper>
+              <Box
+                sx={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 3,
+                  display: 'grid',
+                  placeItems: 'center',
+                  bgcolor: card.bg,
+                  color: card.color
+                }}
+              >
+                {card.icon}
+              </Box>
+            </Box>
+          </Paper>
+        ))}
       </Box>
 
-      <Paper elevation={0} sx={{ p: 2.5, borderRadius: 4, border: '1px solid', borderColor: 'divider' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          p: 2.5,
+          borderRadius: 5,
+          border: '1px solid',
+          borderColor: 'divider'
+        }}
+      >
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: '220px 220px 1fr' },
-            gap: 2
+            gridTemplateColumns: { xs: '1fr', md: '44px 220px 220px 1fr' },
+            gap: 2,
+            alignItems: 'center'
           }}
         >
+          <Box
+            sx={{
+              width: 44,
+              height: 44,
+              borderRadius: 3,
+              display: 'grid',
+              placeItems: 'center',
+              bgcolor: 'rgba(37,99,235,0.10)',
+              color: 'primary.main'
+            }}
+          >
+            <FilterAltRoundedIcon />
+          </Box>
+
           <TextField
             select
             fullWidth
@@ -340,7 +416,7 @@ export function TransactionsPage() {
                 setFilterType('');
                 setFilterStatus('');
               }}
-              sx={{ textTransform: 'none', fontWeight: 700 }}
+              sx={{ textTransform: 'none', fontWeight: 800, borderRadius: 2.5 }}
             >
               Limpar filtros
             </Button>
@@ -356,20 +432,37 @@ export function TransactionsPage() {
           sx={{
             p: 5,
             textAlign: 'center',
-            borderRadius: 4,
+            borderRadius: 5,
             border: '1px dashed',
-            borderColor: 'divider'
+            borderColor: 'divider',
+            bgcolor: 'rgba(15,23,42,0.02)'
           }}
         >
-          <Typography sx={{ fontWeight: 800 }}>Nenhuma transação encontrada</Typography>
+          <ReceiptLongRoundedIcon sx={{ fontSize: 44, color: 'text.secondary', mb: 1 }} />
+
+          <Typography sx={{ fontWeight: 900 }}>
+            Nenhuma transação encontrada
+          </Typography>
+
           <Typography sx={{ color: 'text.secondary', mt: 1 }}>
             Crie sua primeira receita ou despesa para começar.
           </Typography>
+
+          <Button
+            variant="contained"
+            startIcon={<AddRoundedIcon />}
+            onClick={handleOpenCreate}
+            sx={{ mt: 3, textTransform: 'none', fontWeight: 800, borderRadius: 2.5 }}
+          >
+            Criar primeira transação
+          </Button>
         </Paper>
       ) : (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
           {transactions.map((transaction) => {
             const isIncome = transaction.type === TransactionType.INCOME;
+            const mainColor = isIncome ? '#16a34a' : '#dc2626';
+            const mainBg = isIncome ? 'rgba(22,163,74,0.10)' : 'rgba(220,38,38,0.10)';
 
             return (
               <Paper
@@ -377,9 +470,15 @@ export function TransactionsPage() {
                 elevation={0}
                 sx={{
                   p: 2.5,
-                  borderRadius: 4,
+                  borderRadius: 5,
                   border: '1px solid',
-                  borderColor: 'divider'
+                  borderColor: 'divider',
+                  background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 100%)',
+                  transition: '0.2s',
+                  '&:hover': {
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 14px 34px rgba(15,23,42,0.08)'
+                  }
                 }}
               >
                 <Box
@@ -387,7 +486,7 @@ export function TransactionsPage() {
                     display: 'grid',
                     gridTemplateColumns: {
                       xs: '1fr',
-                      md: '44px 1.4fr 1fr 1fr 140px 90px'
+                      md: '54px 1.5fr 1fr 1fr 1fr auto'
                     },
                     gap: 2,
                     alignItems: 'center'
@@ -395,58 +494,61 @@ export function TransactionsPage() {
                 >
                   <Box
                     sx={{
-                      width: 44,
-                      height: 44,
+                      width: 50,
+                      height: 50,
                       borderRadius: 3,
                       display: 'grid',
                       placeItems: 'center',
-                      bgcolor: isIncome ? 'rgba(46, 125, 50, 0.10)' : 'rgba(211, 47, 47, 0.10)',
-                      color: isIncome ? 'success.main' : 'error.main'
+                      bgcolor: mainBg,
+                      color: mainColor
                     }}
                   >
                     {isIncome ? <TrendingUpRoundedIcon /> : <TrendingDownRoundedIcon />}
                   </Box>
 
                   <Box>
-                    <Typography sx={{ fontWeight: 900 }}>
+                    <Typography sx={{ fontWeight: 950, fontSize: 16 }}>
                       {transaction.description}
                     </Typography>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 13 }}>
+
+                    <Typography sx={{ color: 'text.secondary', fontSize: 13, mt: 0.3 }}>
                       {getAccountName(transaction.accountId)} • {getCategoryName(transaction.categoryId)}
                     </Typography>
                   </Box>
 
                   <Box>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 700 }}>
+                    <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 800 }}>
                       Tipo
                     </Typography>
+
                     <Chip
                       size="small"
                       label={transactionTypeLabels[transaction.type]}
-                      color={isIncome ? 'success' : 'error'}
-                      sx={{ fontWeight: 700 }}
+                      sx={{
+                        mt: 0.5,
+                        fontWeight: 800,
+                        bgcolor: mainBg,
+                        color: mainColor
+                      }}
                     />
                   </Box>
 
                   <Box>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 700 }}>
+                    <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 800 }}>
                       Data
                     </Typography>
-                    <Typography sx={{ fontWeight: 800 }}>
+
+                    <Typography sx={{ fontWeight: 900, mt: 0.5 }}>
                       {getDateBR(transaction.date)}
                     </Typography>
                   </Box>
 
                   <Box>
-                    <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 700 }}>
+                    <Typography sx={{ color: 'text.secondary', fontSize: 12, fontWeight: 800 }}>
                       Valor
                     </Typography>
-                    <Typography
-                      sx={{
-                        fontWeight: 900,
-                        color: isIncome ? 'success.main' : 'error.main'
-                      }}
-                    >
+
+                    <Typography sx={{ fontWeight: 950, mt: 0.5, color: mainColor }}>
                       {isIncome ? '+' : '-'} {money.format(transaction.amount)}
                     </Typography>
                   </Box>
@@ -477,11 +579,15 @@ export function TransactionsPage() {
                     icon={<PaidRoundedIcon />}
                     label={transactionStatusLabels[transaction.status]}
                     color={getStatusColor(transaction.status)}
-                    sx={{ fontWeight: 700 }}
+                    sx={{ fontWeight: 800 }}
                   />
 
                   {transaction.paymentMethod && (
-                    <Chip size="small" label={transaction.paymentMethod} sx={{ fontWeight: 700 }} />
+                    <Chip
+                      size="small"
+                      label={transaction.paymentMethod}
+                      sx={{ fontWeight: 800 }}
+                    />
                   )}
                 </Box>
               </Paper>
