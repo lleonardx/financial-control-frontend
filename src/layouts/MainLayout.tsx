@@ -97,12 +97,12 @@ export function MainLayout() {
           </Box>
 
           <Box>
-            <Typography sx={{ fontWeight: 900, fontSize: 18 }}>
-              FinancialControl
+            <Typography sx={{ fontWeight: 850, fontSize: 16 }}>
+              Controle Financeiro
             </Typography>
-            <Typography sx={{ fontSize: 12, opacity: 0.7 }}>
+            {/* <Typography sx={{ fontSize: 12, opacity: 0.7 }}>
               Controle financeiro
-            </Typography>
+            </Typography> */}
           </Box>
         </Box>
       </Box>
